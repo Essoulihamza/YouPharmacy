@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <windows.h>
 #include <strings.h>
+#include <time.h>
 typedef struct product //product (code / name / amount / price)
 {
     char code[30];
@@ -9,10 +10,21 @@ typedef struct product //product (code / name / amount / price)
     int amount;
     float price;
 }product;
+typedef struct date
+{
+    int day;
+    int month;
+    int year;
+}date;
+typedef struct buyed_product{
+    product info;
+    date date;
+}Buyed_product;
 //globle variables
 int products_amount = 0;
-double total_price = 0;
+int sales = 0;
 product* P_product = NULL;
+Buyed_product* B_product = NULL;
 //function prototype
 int menu();
 void print();
@@ -28,15 +40,25 @@ void buy_product();
 void stock_status();
 void stock_supply();
 void delete_products();
+double min_sale_price();
+double max_sale_price();
+double totat_sale_price();
+void sales_statistics();
+int is_avialable(char* code, int amount);
+void get_product_info();
+void exit_program();
+void sale_product(char* code, int amount);
+void go_back();
 //program start point
 int main(void)
 {
-    system("cls");
     menu();
+    free(B_product);
     free(P_product);
 }
 int menu()
 {
+    system("cls");
     int choice;
     printf("\n_______________________________________________________________Gestion de Pharmacie_____________________________________________________\n");
     printf("\n1 - Ajouter un nouveau produit.");
@@ -54,126 +76,91 @@ int menu()
     scanf("%d", &choice);
     switch(choice)
     {
-        case 1:
-            system("cls"); 
-            add_one_product(0);
+        case 1:     add_one_product(0);
             break;
-        case 2: 
-            system("cls");
-            add_products();
+        case 2:     add_products();
             break;
-        case 3: 
-            system("cls");
-            sort();
-            print();
+        case 3:     sort();
             break;
-        case 4: 
-            system("cls");
-            buy_product();
+        case 4:     buy_product();
             break;
-        case 5: 
-            system("cls");
-            search_products();
+        case 5:     search_products();
             break;
-        case 6: 
-            system("cls");
-            stock_status();
+        case 6:     stock_status();
             break;
-        case 7: 
-            system("cls");
-            stock_supply();
+        case 7:     stock_supply();
             break;
-        case 8: 
-            system("cls");
-            delete_products();
+        case 8:     delete_products();
             break;
-        case 9:
-            system("cls");
-            printf("Statistique de vente.\n");
+        case 9:     sales_statistics();
             break;
-        case 10:
-            system("cls");
-            printf("Au revoir...");
-            free(P_product);
-            Sleep(500);
-            exit(0);
+        case 10:    exit_program(0);
+            break;
+        case 11: 
+        printf("%lf"); break;
         default: printf("no choice with this input\n");
-            Sleep(1000);
-            system("cls");
             menu();
     }
 }
 void add_one_product(int style)
 {
-    int choice;
+    int choice; //for menu
     if( products_amount == 0 )
     {
-        P_product = (product*) malloc(sizeof(product));
+        P_product = (product*) malloc(sizeof(product)); //allocate memory for the first time
         if( P_product == NULL )
         {
-            printf("Mémoire insuffisante!\n");
-            exit(2);
-        }
-    }else{
-        P_product = (product*) realloc(P_product, (1 + products_amount) * sizeof(product));
-        if( P_product == NULL )
-        {
-            printf("out of memory!\n");
-            exit(2);
-        }
-    }
-    if( style == 0 )
-    {
-        printf("\n_______________________________________________________________Gestion de Pharmacie_____________________________________________________\n");
-        printf("\n------------------------------------------------------------Ajouter un nouveau produit---------------------------------------------------\n");
-        printf("\n\n");
-        printf("Entrez le code du produit: ");
-        scanf("%s", &P_product[products_amount].code);
-        printf("\nEntrez le nom du produit: ");
-        scanf("%s", &P_product[products_amount].name);
-        printf("\nentrer la quantité du produit: ");
-        scanf("%d", &P_product[products_amount].amount);
-        printf("\nEntrez le prix du produit(DH): ");
-        scanf("%f", &P_product[products_amount].price);
-        system("cls");
-        printf("\nLe produit a été ajouté avec succès."); products_amount++;
-        Sleep(1000);
-        printf("\n\n");
-        printf("1 - revenir au menu.\n");
-        printf("2 - quitter le programme.\n\n\n");
-        printf("Entrez votre choix: ");
-        scanf("%d", &choice);
-        if( choice == 1 )
-        {
-            system("cls");
-            menu();
-        }else if( choice == 2 ) 
-        {
-            system("cls");
-            printf("Au revoir...");
-            free(P_product);
-            Sleep(500);
-            exit(0);
+            exit_program(2);
         }
     }
     else
     {
-        printf("\n\n");
-        printf("Entrez le code du produit: ");
-        scanf("%s", &P_product[products_amount].code);
-        printf("\nEntrez le nom du produit: ");
-        scanf("%s", &P_product[products_amount].name);
-        printf("\nentrer la quantité du produit: ");
-        scanf("%d", &P_product[products_amount].amount);
-        printf("\nEntrez le prix du produit(DH): ");
-        scanf("%f", &P_product[products_amount].price);
-        system("cls");
-        printf("\nLe produit a été ajouté avec succès."); products_amount++;
-        Sleep(1000);
+        P_product = (product*) realloc(P_product,  (products_amount + 1) * sizeof(product)); //reallocate the memory to insert new items
+        if( P_product == NULL )
+        {
+            exit_program(2);
+        }
     }
+    if( style == 0 )
+    {
+        system("cls");
+        printf("\n_______________________________________________________________Gestion de Pharmacie_____________________________________________________\n");
+        printf("\n------------------------------------------------------------Ajouter un nouveau produit---------------------------------------------------\n");
+        get_product_info();
+        printf("\n\n");
+        printf("1 - ajouter un autre produit.\n");
+        printf("2 - revenir au menu.\n");
+        printf("3 - quitter le programme.\n\n\n");
+        printf("Entrez votre choix: ");
+        scanf("%d", &choice);
+        if( choice == 1 )
+        {
+            add_one_product(0);
+        }else if( choice == 2 ) 
+        {
+            menu();
+        }else if( choice == 3 )
+        {
+            exit_program(0);
+        }
+    }
+    else
+    {
+        get_product_info();
+    }
+}
+void exit_program(int error)
+{
+    system("cls");
+    printf("Au revoir...");
+    free(B_product);
+    free(P_product);
+    Sleep(500);
+    exit(error);
 }
 void add_products()
 {
+    system("cls");
     int number_of_products;
     int choice;
     printf("\n_______________________________________________________________Gestion de Pharmacie_____________________________________________________\n");
@@ -183,7 +170,6 @@ void add_products()
     scanf("%d", &number_of_products);
     if( number_of_products == 1 )
     {
-        system("cls");
         add_one_product(0);
     }
     for(int i = 1; i <= number_of_products; i++ )
@@ -200,28 +186,26 @@ void add_products()
     Sleep(1000);
     printf("\ntous les %i produits ont été ajoutés avec succès.\n", number_of_products);
     printf("\n\n");
-    printf("1 - Lister tous les produits (Nom, prix, prix TTC)\n\n\n");
-    printf("2 - revenir au menu.\n\n\n");
-    printf("3 - quitter le programme.\n\n\n");
+    printf("1 - ajouter quelques autres produits.\n\n\n");
+    printf("2 - Lister tous les produits (Nom, prix, prix TTC)\n\n\n");
+    printf("3 - revenir au menu.\n\n\n");
+    printf("4 - quitter le programme.\n\n\n");
     printf("Entrez votre choix: ");
     scanf("%d", &choice);
     if( choice == 1 )
     {
-        system("cls");
-        sort();
-        print();
+        add_products();
     }
     else if( choice == 2 )
     {
-        system("cls");
-        menu();
-    }else if( choice == 3 ) 
+        sort();
+    }
+    else if( choice == 3 )
     {
-        system("cls");
-        printf("Au revoir...");
-        free(P_product);
-        Sleep(500);
-        exit(0);
+        menu();
+    }else if( choice == 4 ) 
+    {
+        exit_program(0);
     }
 }
 void print()
@@ -230,11 +214,13 @@ void print()
     if( products_amount == 0 )
     {
         printf("\n\n\n\n\naucun produit disponible pour le moment.\n\n\n\n\n");
-    }else{
-        printf("CODE                NAME            AMOUNT              PRICE\n\n");
+    }
+    else
+    {
+        printf("CODE                NOME            QUANTITE              PRIX           PRIX(TTC)\n\n");
         for( int i = 0; i < products_amount; i++ )
         {
-            printf("%s                 %s            %d           %.2f DH      \n",P_product[i].code, P_product[i].name,P_product[i].amount ,P_product[i].price);
+            printf("%s                 %s            %d           %.2f DH           %.2f DH\n",P_product[i].code, P_product[i].name,P_product[i].amount ,P_product[i].price);
         }
         printf("\n\n");
     }
@@ -244,53 +230,40 @@ void print()
     scanf("%d", &choice);
     if( choice == 1 )
     {
-        system("cls");
         menu();
     }
     else if( choice == 2 )
     {
-        system("cls");
-        printf("Au revoir...");
-        free(P_product);
-        Sleep(500);
-        exit(0);
+        exit_program(0);
     }
-    
 }
 void sort()
 {
+    system("cls");
     int choice;
-    printf("1 - lister tous les produits selon l’ordre alphabétique  croissant du nom.\n\n\n");
-    printf("2 - lister tous les produits selon l’ordre  décroissant du prix.\n\n\n");
+    printf("1 - lister tous les produits selon l'ordre alphabétique  croissant du nom.\n\n\n");
+    printf("2 - lister tous les produits selon l'ordre  décroissant du prix.\n\n\n");
     printf("3 - revenir au menu.\n\n\n");
     printf("4 - quitter le programme.\n\n\n");
     printf("Entrez votre choix: ");
     scanf("%d", &choice);
     if( choice == 1 )
     {
-        system("cls");
         bubble_sort_alphabitcly();
-        print();
     }else if( choice == 2 )
     {
-        system("cls");
-        selection_sort_by_price();
-        
+        selection_sort_by_price();   
     }else if( choice == 3 )
     {
-        system("cls");
         menu();
     }else if( choice == 4 )
     {
-        system("cls");
-        printf("Au revoir...");
-        free(P_product);
-        Sleep(500);
-        exit(0);
+        exit_program(0);
     }
 }
 void selection_sort_by_price()
 {
+    system("cls");
     product temp;
     int max_pos;
     for( int i = 0; i < products_amount - 1; i++ )
@@ -308,9 +281,11 @@ void selection_sort_by_price()
             }
         }
     }
+    print();
 }
 void bubble_sort_alphabitcly()
 {
+    system("cls");
     product temp;
     int count = -1;
     while( count != 0 )
@@ -328,115 +303,84 @@ void bubble_sort_alphabitcly()
             }
         }
     }
-
+    print();
 }
 void buy_product()
 {
-    int number_of_products, amount, choice;
+    system("cls");
     char code[30];
+    int amount, choice;
     printf("\n_______________________________________________________________Gestion de Pharmacie_____________________________________________________\n");
-    printf("\n----------------------------------------------------------------acheter un produit---------------------------------------------------\n");
-    printf("\n\n");
-    printf("combien de produit voulez-vous acheter: ");
-    scanf("%i", &number_of_products);
-    printf("\n");
-    if( number_of_products = 1 )
+    printf("\n-----------------------------------------------------------------Acheter produit---------------------------------------------------------\n");
+    printf("\n\n\n");
+    printf("entrez le code du produit que vous souhaitez acheter: ");
+    scanf("%s", &code);
+    if( is_avialable(code, 0) == 0 )
     {
-        printf("entrer le code du produit: ");
-        scanf("%s", &code);
-        printf("\n\n");
-        printf("entrez la quantité du produit que vous souhaitez acheter: ");
-        scanf("%i", &amount);
-        for (int j = 0; j < products_amount; j++)
-        {
-            if( strcasecmp(code, P_product[j].code) == 0 )
-            {
-                if(P_product[j].amount < amount)
-                {
-                    printf("il n'y a pas assez de quantité en stock!!");
-                    printf("\n\n\n"); 
-                    printf("1 - revenir au menu.\n\n\n");
-                    printf("2 - quitter le programme.\n\n\n");
-                    printf("Entrez votre choix: ");
-                    scanf("%d", &choice);
-                    if( choice == 1 )
-                    {
-                        system("cls");
-                        menu();
-                    }else if( choice == 2 ) 
-                    {
-                        system("cls");
-                        printf("Au revoir...");
-                        free(P_product);
-                        Sleep(500);
-                        exit(0);
-                    }
-                }
-                else{
-                    P_product[j].amount -= amount;
-                    Sleep(400);
-                    system("cls");
-                    printf("l'achat a été effectué avec succès."); total_price += P_product[j].price;
-                }
-            }
-        }
-    }else{
-
-    
-        for( int i = 1; i <= number_of_products; i++ )
-        {
-            if( i == 1)
-            {
-                printf("entrer le code du premier produit: ");
-                scanf("%s", &code);
-                printf("\n\n");
-                printf("entrer la quantité du premier produit: ");
-                scanf("%i", &amount);
-            }else{
-                printf("entrer le code du %ième produit", i);
-                scanf("%s", &code);
-                printf("entrer la quantité du %ième produit: ", i);
-                scanf("%i", &amount);
-            }
-            for (int j = 0; j < products_amount; j++)
-            {
-                if( strcasecmp(code, P_product[j].code) == 0 )
-                {
-                    P_product[j].amount -= amount;
-                
-
-                }
-            }
-        
-        }
+        printf("\n\n\nce produit n'est pas disponible pour le moment.\n\n\n");
+        Sleep(1000);
+        system("cls");
+        buy_product();
     }
-    printf("\n\n\n"); 
-    printf("1 - revenir au menu.\n\n\n");
-    printf("2 - quitter le programme.\n\n\n");
+    else
+    {
+        printf("\nentrez la quantité que vous souhaitez: ");
+        scanf("%d", &amount);
+        if( is_avialable(code, amount) == -1)
+        {
+            printf("\n\n\nIl n'y a pas assez de quantité pour ce produit.\n\n\n");
+            Sleep(3000);
+            system("cls");
+            buy_product();
+        }
+        else if (is_avialable(code, amount) == 1)
+        {
+            if(sales == 0)
+            {
+                B_product = (Buyed_product*) malloc(sizeof(Buyed_product));
+                if(B_product == NULL )
+                {
+                    printf("Mémoire insuffisante!\n");
+                    exit_program(2);
+                }
+            }
+            else if( sales > 0 )
+            {
+                B_product = (Buyed_product*) realloc(B_product, (sales+1)*sizeof(Buyed_product));
+                if(B_product == NULL )
+                {
+                    printf("Mémoire insuffisante!\n");
+                    exit_program(2);
+                }
+            }
+            sale_product(code, amount);
+        }
+
+    }
+    printf("\n\n\n");
+    printf("1 - revenir au menu.\n");
+    printf("2 - quitter le programme.\n");
     printf("Entrez votre choix: ");
     scanf("%d", &choice);
-    if( choice == 1 )
+    if( choice == 1 ) 
     {
-        system("cls");
         menu();
-    }else if( choice == 2 ) 
+    }
+    else if ( choice == 2 )
     {
-        system("cls");
-        printf("Au revoir...");
-        free(P_product);
-        Sleep(500);
-        exit(0);
+        exit_program(0);
     }
 }
 void search_products()
 {
+    system("cls");
     int choice;
     printf("\n_______________________________________________________________Gestion de Pharmacie_____________________________________________________\n");
     printf("\n---------------------------------------------------------------rechercher un produit---------------------------------------------------\n");
     printf("\n\n");
-    printf("recherché par: \n\n");
+    printf("recherche par: \n\n");
     printf("\t\t1 - Code.\n");
-    printf("\t\t2 - Quantité.\n");
+    printf("\t\t2 - Quantite.\n");
     printf("\n\n\n");
     printf("3 - revenir au menu.\n");
     printf("4 - quitter le programme.\n");
@@ -444,32 +388,26 @@ void search_products()
     scanf("%d", &choice);
     if( choice == 1 ) 
     {
-        system("cls");
         search_by_code();
     }
     else if ( choice == 2 )
     {
-        system("cls");
         search_by_amount();
     }
     else if( choice == 3 )
     {
-        system("cls");
         menu();
-    }else if( choice == 4 ) 
-    {
-        system("cls");
-        printf("Au revoir...");
-        free(P_product);
-        Sleep(500);
-        exit(0);
     }
-
+    else if( choice == 4 ) 
+    {
+        exit_program(0);
+    }
 }
 void search_by_code()
 {
+    system("cls");
     char code[30];
-    int style = -1, choice;
+    int style = 0, choice;
     printf("\n_______________________________________________________________Gestion de Pharmacie_____________________________________________________\n");
     printf("\n---------------------------------------------------------------rechercher un produit---------------------------------------------------\n");
     printf("\n\n\n");
@@ -481,14 +419,10 @@ void search_by_code()
         {
             printf("c'est le produit que vous recherchez:\n\n\n");
             printf("\t\t\tCode: %s        Name: %s      %i      %.2f", P_product[i].code, P_product[i].name, P_product[i].amount, P_product[i].price);
-            style == 0;
-        }
-        else{
-            Sleep(1000);
-            printf("\t\t\tRecherche...");
+            style++;
         }
     }
-    if(style != 0) 
+    if( style ==  0 ) 
     {
         printf("\n\nce produit n'existe pas!");
     }
@@ -496,9 +430,20 @@ void search_by_code()
     printf("1 - revenir au menu.\n");
     printf("2 - quitter le programme.\n");
     printf("Entrez votre choix: ");
+    scanf("%d", &choice);
+    if( choice == 1 )
+    {
+        menu();
+    }
+    else if( choice == 2 ) 
+    {
+        exit_program(0);
+    }
+
 }
 void search_by_amount()
 {
+    system("cls");
     int style = -1, choice, amount;
     printf("\n_______________________________________________________________Gestion de Pharmacie_____________________________________________________\n");
     printf("\n---------------------------------------------------------------rechercher un produit---------------------------------------------------\n");
@@ -529,19 +474,15 @@ void search_by_amount()
     scanf("%d", &choice);
     if( choice == 1 )
     {
-        system("cls");
         menu();
     }else if( choice == 2 ) 
     {
-        system("cls");
-        printf("Au revoir...");
-        free(P_product);
-        Sleep(500);
-        exit(0);
+        exit_program(0);
     }
 }
 void stock_status()
 {
+    system("cls");
     int choice, style = 0;
     printf("\n_______________________________________________________________Gestion de Pharmacie_____________________________________________________\n");
     printf("\n-----------------------------------------------------------------Etat du stock-----------------------------------------------------------\n");
@@ -556,7 +497,7 @@ void stock_status()
     }
     if(style == 0) 
     {
-        printf("\n\nil n'y a pas de produit inférieur à 3!\n\n\n\n\n\n");
+        printf("\n\nil n'y a pas de produit inferieur à 3!\n\n\n\n\n\n");
     }
     printf("1 - revenir au menu.\n");
     printf("2 - quitter le programme.\n");
@@ -564,27 +505,23 @@ void stock_status()
     scanf("%d", &choice);
     if( choice == 1 )
     {
-        system("cls");
         menu();
     }else if( choice == 2 ) 
     {
-        system("cls");
-        printf("Au revoir...");
-        free(P_product);
-        Sleep(500);
-        exit(0);
+        exit_program(0);
     }
 }
 void stock_supply()
 {
+    system("cls");
     char code[30];
     int amount, choice, style = 0;
     printf("\n_______________________________________________________________Gestion de Pharmacie_____________________________________________________\n");
     printf("\n----------------------------------------------------------------Alimenter le stock--------------------------------------------------------\n");
     printf("\n\n\n");
-    printf("Entrez le code du produit que vous souhaitez mettre à jour sa quantité: ");
+    printf("Entrez le code du produit que vous souhaitez mettre à jour sa quantite: ");
     scanf("%s", code);
-    printf("Entrez la quantité que vous souhaitez ajouter: ");
+    printf("Entrez la quantite que vous souhaitez ajouter: ");
     scanf("%d", &amount);
     for( int i = 0; i < products_amount; i++ )
     {
@@ -605,19 +542,15 @@ void stock_supply()
     scanf("%d", &choice);
     if( choice == 1 )
     {
-        system("cls");
         menu();
     }else if( choice == 2 ) 
     {
-        system("cls");
-        printf("Au revoir...");
-        free(P_product);
-        Sleep(500);
-        exit(0);
+        exit_program(0);
     }
 }
 void delete_products()
 {
+    system("cls");
     char code[30];
     int choice;
     printf("\n_______________________________________________________________Gestion de Pharmacie_____________________________________________________\n");
@@ -644,24 +577,177 @@ void delete_products()
     scanf("%d", &choice);
     if( choice == 1 )
     {
-        system("cls");
         menu();
-    }else if( choice == 2 ) 
-    {
-        system("cls");
-        printf("Au revoir...");
-        free(P_product);
-        Sleep(500);
-        exit(0);
     }
-
+    else if( choice == 2 ) 
+    {
+        exit_program(0);
+    }
 }
 void sales_statistics()
 {
+    int choice;
+    double total = totat_sale_price();
+    double max = max_sale_price();
+    double min = min_sale_price();
     printf("\n_______________________________________________________________Gestion de Pharmacie_____________________________________________________\n");
     printf("\n---------------------------------------------------------------Statistique de vente-----------------------------------------------------\n");
     printf("\n\n\n");
-
-
+    printf("1 - Afficher le total des prix des produits vendus en journee courante.\n\n");
+    printf("2 - Afficher la moyenne des prix des produits vendus en journee courante.\n\n");
+    printf("3 - Afficher le Max des prix des produits vendus en journee courante.\n\n");
+    printf("4 - Afficher le Min des prix des produits vendus en journee courante.\n\n");
+    printf("\n\n\n");
+    printf("Entrez votre choix: ");
+    scanf("%d", &choice);
+    switch(choice)
+    {
+        case 1:
+            system("cls");
+            printf("\n\n\n\nla valeur totale des ventes aujourd'hui est: %lf\n\n\n", total);
+            go_back();
+            break;
+        case 2: 
+            system("cls");
+            printf("\n\n\nla valeur moyenne des ventes aujourd'hui est: %lf\n\n\n", total / sales);
+            go_back();
+            break;
+        case 3:
+            system("cls");
+            printf("\n\nle Max des prix des produits vendus aujourd'hui est: %lf\n\n\n", max);
+            go_back();
+            break;
+        case 4:
+            system("cls");
+            printf("\n\nle Min des prix des produits vendus aujourd'hui est: %lf\n\n\n", min);
+            go_back();
+            break;
+        case 5:
+            menu();
+            break;
+        case 6:
+            exit_program(0);
+            break;
+        default: 
+            exit(0);
+    }
 }
-void 
+double totat_sale_price()
+{
+    time_t now = time(NULL);
+    struct tm* date = localtime(&now);
+    double total = 0;
+    int day = date->tm_mday + 1;
+    int month = date->tm_mon + 1;
+    int year = date->tm_year + 1900;
+    for(int i = 0; i < sales; i++ )
+    {
+        if( B_product[i].date.year == year )
+            if(B_product[i].date.month == month )
+                if(B_product[i].date.day == day )
+                    total += B_product[i].info.price;
+    }
+    return total;
+}
+double max_sale_price()
+{
+    time_t now = time(NULL);
+    struct tm* date = localtime(&now);
+    double max = B_product[0].info.price;
+    int day = date->tm_mday + 1;
+    int month = date->tm_mon + 1;
+    int year = date->tm_year + 1900;
+
+    for(int i = 0; i < sales; i++ )
+    {
+        if( B_product[i].date.year == year )
+            if(B_product[i].date.month == month )
+                if(B_product[i].date.day == day )
+                    if( B_product[i].info.price > max )
+                        max = B_product[i].info.price;
+    }
+    printf("x: %d",max);
+    return max;
+}
+double min_sale_price()
+{
+    time_t now = time(NULL);
+    struct tm* date = localtime(&now);
+    double min = B_product[0].info.price;
+    int day = date->tm_mday + 1;
+    int month = date->tm_mon + 1;
+    int year = date->tm_year + 1900;
+    for(int i = 0; i < sales; i++ )
+    {
+        if( B_product[i].date.year == year )
+            if(B_product[i].date.month == month )
+                if(B_product[i].date.day == day )
+                    if ( B_product[i].info.price < min )
+                        min = B_product[i].info.price;
+    }
+    return min;
+}
+int is_avialable(char* code, int amount)
+{
+    int answer = 0;
+    for(int i = 0; i < products_amount; i++ )
+    {
+        if(strcasecmp(code, P_product[i].code) == 0 )
+        {
+            answer = 1;
+            if(P_product[i].amount < amount)
+            {
+                answer = -1;
+            }
+        }
+    }
+    return answer;
+}
+void get_product_info()
+{
+    printf("\n\n");
+    printf("Entrez le code du produit: ");
+    scanf("%s", &P_product[products_amount].code);
+    printf("\nEntrez le nom du produit: ");
+    scanf("%s", &P_product[products_amount].name);
+    printf("\nentrer la quantité du produit: ");
+    scanf("%d", &P_product[products_amount].amount);
+    printf("\nEntrez le prix du produit(DH): ");
+    scanf("%f", &P_product[products_amount].price);
+    system("cls");
+    printf("\nLe produit a été ajouté avec succès."); products_amount++;
+    Sleep(1000);
+}
+void sale_product(char* code, int amount)
+{
+    time_t now = time(NULL);
+    struct tm* date = localtime(&now);
+    for(int i = 0; i < products_amount; i++ )
+    {
+        if(strcasecmp(code, P_product[i].code) == 0 )
+        {
+            strcpy(B_product[sales].info.code, code);
+            strcpy(B_product[sales].info.name, P_product[i].name);
+            B_product[sales].info.amount = amount;
+            B_product[sales].info.price = P_product[i].price + (P_product[i].price * 0.15);
+            B_product[sales].date.day = date->tm_mday + 1;
+            B_product[sales].date.month = date->tm_mon + 1;
+            B_product[sales].date.year = date->tm_year + 1900; 
+            P_product[i].amount -= amount;
+            sales++;
+        }
+    }
+}
+void go_back()
+{
+    int choice;
+    printf("retour au menu.\n");
+    printf("quitter le programme.\n");
+    printf("entrez votre choix: ");
+    scanf("%i", choice);
+    switch(choice)
+    {
+        case 1: menu(); break;
+        case 2: exit_program(0); break;
+    }
+}
