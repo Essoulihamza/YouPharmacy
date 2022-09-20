@@ -40,15 +40,16 @@ void buy_product();
 void stock_status();
 void stock_supply();
 void delete_products();
-double min_sale_price();
-double max_sale_price();
-double totat_sale_price();
+float min_sale_price();
+float max_sale_price();
+float totat_sale_price();
 void sales_statistics();
 int is_avialable(char* code, int amount);
 void get_product_info();
 void exit_program();
 void sale_product(char* code, int amount);
 void go_back();
+float average_sale_price();
 //program start point
 int main(void)
 {
@@ -220,7 +221,8 @@ void print()
         printf("CODE                NOME            QUANTITE              PRIX           PRIX(TTC)\n\n");
         for( int i = 0; i < products_amount; i++ )
         {
-            printf("%s                 %s            %d           %.2f DH           %.2f DH\n",P_product[i].code, P_product[i].name,P_product[i].amount ,P_product[i].price);
+            float ttc = P_product[i].price + (P_product[i].price * 0.15 );
+            printf("%s                 %s            %d           %.2f DH           %.2f DH\n",P_product[i].code, P_product[i].name,P_product[i].amount ,P_product[i].price, ttc );
         }
         printf("\n\n");
     }
@@ -320,7 +322,7 @@ void buy_product()
         printf("\n\n\nce produit n'est pas disponible pour le moment.\n\n\n");
         Sleep(1000);
         system("cls");
-        buy_product();
+        go_back();
     }
     else
     {
@@ -331,7 +333,7 @@ void buy_product()
             printf("\n\n\nIl n'y a pas assez de quantité pour ce produit.\n\n\n");
             Sleep(3000);
             system("cls");
-            buy_product();
+            go_back();
         }
         else if (is_avialable(code, amount) == 1)
         {
@@ -418,7 +420,7 @@ void search_by_code()
         if(strcasecmp(code, P_product[i].code) == 0)
         {
             printf("c'est le produit que vous recherchez:\n\n\n");
-            printf("\t\t\tCode: %s        Name: %s      %i      %.2f", P_product[i].code, P_product[i].name, P_product[i].amount, P_product[i].price);
+            printf("\t\t\tCode: %s        Name: %s      Quantité: %i       Prix: %.2f DH    Prix(TTC): %.2f \n\n", P_product[i].code, P_product[i].name, P_product[i].amount, P_product[i].price, P_product[i].price + P_product[i].price * 0.15 );
             style++;
         }
     }
@@ -444,7 +446,7 @@ void search_by_code()
 void search_by_amount()
 {
     system("cls");
-    int style = -1, choice, amount;
+    int style = 0, choice, amount;
     printf("\n_______________________________________________________________Gestion de Pharmacie_____________________________________________________\n");
     printf("\n---------------------------------------------------------------rechercher un produit---------------------------------------------------\n");
     printf("\n\n\n");
@@ -455,15 +457,15 @@ void search_by_amount()
         if(P_product[i].amount == amount )
         {
             printf("c'est les produits que vous recherchez:\n\n\n");
-            printf("\t\t\tCode: %s        Name: %s      %i      %.2f DH\n\n", P_product[i].code, P_product[i].name, P_product[i].amount, P_product[i].price);
-            style == 0;
+            printf("\t\t\tCode: %s        Name: %s      Quantité: %i       Prix: %.2f DH    Prix(TTC): %.2f \n\n", P_product[i].code, P_product[i].name, P_product[i].amount, P_product[i].price, P_product[i].price + P_product[i].price * 0.15 );
+            style++;
         }
         else{
             Sleep(1000);
             printf("\t\t\tRecherche...");
         }
     }
-    if(style != 0) 
+    if(style == 0) 
     {
         printf("\n\nce produit n'existe pas!");
     }
@@ -586,10 +588,12 @@ void delete_products()
 }
 void sales_statistics()
 {
+    system("cls");
     int choice;
-    double total = totat_sale_price();
-    double max = max_sale_price();
-    double min = min_sale_price();
+    float total = totat_sale_price();
+    float average = average_sale_price();
+    float max = max_sale_price();
+    float min = min_sale_price();
     printf("\n_______________________________________________________________Gestion de Pharmacie_____________________________________________________\n");
     printf("\n---------------------------------------------------------------Statistique de vente-----------------------------------------------------\n");
     printf("\n\n\n");
@@ -597,6 +601,8 @@ void sales_statistics()
     printf("2 - Afficher la moyenne des prix des produits vendus en journee courante.\n\n");
     printf("3 - Afficher le Max des prix des produits vendus en journee courante.\n\n");
     printf("4 - Afficher le Min des prix des produits vendus en journee courante.\n\n");
+    printf("5 - retour au menu\n");
+    printf("6 - fermer le programme");
     printf("\n\n\n");
     printf("Entrez votre choix: ");
     scanf("%d", &choice);
@@ -604,22 +610,22 @@ void sales_statistics()
     {
         case 1:
             system("cls");
-            printf("\n\n\n\nla valeur totale des ventes aujourd'hui est: %lf\n\n\n", total);
+            printf("\n\n\n\nla valeur totale des ventes aujourd'hui est: %.2f\n\n\n", total);
             go_back();
             break;
         case 2: 
             system("cls");
-            printf("\n\n\nla valeur moyenne des ventes aujourd'hui est: %lf\n\n\n", total / sales);
+            printf("\n\n\nla valeur moyenne des ventes aujourd'hui est: %.2f\n\n\n", average);
             go_back();
             break;
         case 3:
             system("cls");
-            printf("\n\nle Max des prix des produits vendus aujourd'hui est: %lf\n\n\n", max);
+            printf("\n\nle Max des prix des produits vendus aujourd'hui est: %.2f\n\n\n", max);
             go_back();
             break;
         case 4:
             system("cls");
-            printf("\n\nle Min des prix des produits vendus aujourd'hui est: %lf\n\n\n", min);
+            printf("\n\nle Min des prix des produits vendus aujourd'hui est: %.2f\n\n\n", min);
             go_back();
             break;
         case 5:
@@ -628,61 +634,65 @@ void sales_statistics()
         case 6:
             exit_program(0);
             break;
-        default: 
-            exit(0);
     }
 }
-double totat_sale_price()
+float totat_sale_price()
 {
     time_t now = time(NULL);
     struct tm* date = localtime(&now);
-    double total = 0;
-    int day = date->tm_mday + 1;
-    int month = date->tm_mon + 1;
-    int year = date->tm_year + 1900;
+    float total = 0;
+    int day = date->tm_mday;
+    int month = date->tm_mon;
+    int year = date->tm_year;
     for(int i = 0; i < sales; i++ )
     {
-        if( B_product[i].date.year == year )
-            if(B_product[i].date.month == month )
-                if(B_product[i].date.day == day )
-                    total += B_product[i].info.price;
+        if( B_product[i].date.year == year && B_product[i].date.month == month && B_product[i].date.day == day )
+            total = total + B_product[i].info.price * B_product[i].info.amount;
     }
     return total;
 }
-double max_sale_price()
+float average_sale_price()
 {
     time_t now = time(NULL);
     struct tm* date = localtime(&now);
-    double max = B_product[0].info.price;
-    int day = date->tm_mday + 1;
-    int month = date->tm_mon + 1;
-    int year = date->tm_year + 1900;
-
+    float average = 0;
+    int day = date->tm_mday;
+    int month = date->tm_mon;
+    int year = date->tm_year;
     for(int i = 0; i < sales; i++ )
     {
-        if( B_product[i].date.year == year )
-            if(B_product[i].date.month == month )
-                if(B_product[i].date.day == day )
-                    if( B_product[i].info.price > max )
-                        max = B_product[i].info.price;
+        if( B_product[i].date.year == year && B_product[i].date.month == month && B_product[i].date.day == day )
+            average += B_product[i].info.price;
     }
-    printf("x: %d",max);
+    average = average / sales;
+    return average;
+}
+float max_sale_price()
+{
+    time_t now = time(NULL);
+    struct tm* date = localtime(&now);
+    float max = 0;
+    int day = date->tm_mday;
+    int month = date->tm_mon;
+    int year = date->tm_year;
+    for(int i = 0; i < sales; i++ )
+    {
+        if( B_product[i].date.year == year && B_product[i].date.month == month &&  B_product[i].date.day == day && B_product[i].info.price > max )
+              max = B_product[i].info.price;
+    }
     return max;
 }
-double min_sale_price()
+float min_sale_price()
 {
     time_t now = time(NULL);
     struct tm* date = localtime(&now);
-    double min = B_product[0].info.price;
-    int day = date->tm_mday + 1;
-    int month = date->tm_mon + 1;
-    int year = date->tm_year + 1900;
+    float min = B_product[0].info.price;
+    int day = date->tm_mday;
+    int month = date->tm_mon;
+    int year = date->tm_year ;
     for(int i = 0; i < sales; i++ )
     {
-        if( B_product[i].date.year == year )
-            if(B_product[i].date.month == month )
-                if(B_product[i].date.day == day )
-                    if ( B_product[i].info.price < min )
+        if( B_product[i].date.year == year && B_product[i].date.month == month &&  B_product[i].date.day == day && B_product[i].info.price < min )
                         min = B_product[i].info.price;
     }
     return min;
@@ -705,18 +715,29 @@ int is_avialable(char* code, int amount)
 }
 void get_product_info()
 {
+    char code[30];
     printf("\n\n");
     printf("Entrez le code du produit: ");
-    scanf("%s", &P_product[products_amount].code);
-    printf("\nEntrez le nom du produit: ");
-    scanf("%s", &P_product[products_amount].name);
-    printf("\nentrer la quantité du produit: ");
-    scanf("%d", &P_product[products_amount].amount);
-    printf("\nEntrez le prix du produit(DH): ");
-    scanf("%f", &P_product[products_amount].price);
-    system("cls");
-    printf("\nLe produit a été ajouté avec succès."); products_amount++;
-    Sleep(1000);
+    scanf("%s", &code);
+    if( is_avialable(code, 0) == 1)
+    {
+        printf("\n\n\n\nce produit existe déjà\n\n\n");
+        Sleep(2000);
+        add_products();
+    }
+    else
+    {
+        strcpy(P_product[products_amount].code, code);
+        printf("\nEntrez le nom du produit: ");
+        scanf("%s", &P_product[products_amount].name);
+        printf("\nentrer la quantité du produit: ");
+        scanf("%d", &P_product[products_amount].amount);
+        printf("\nEntrez le prix du produit(DH): ");
+        scanf("%f", &P_product[products_amount].price);
+        system("cls");
+        printf("\nLe produit a été ajouté avec succès."); products_amount++;
+        Sleep(1000);
+    }
 }
 void sale_product(char* code, int amount)
 {
@@ -730,9 +751,9 @@ void sale_product(char* code, int amount)
             strcpy(B_product[sales].info.name, P_product[i].name);
             B_product[sales].info.amount = amount;
             B_product[sales].info.price = P_product[i].price + (P_product[i].price * 0.15);
-            B_product[sales].date.day = date->tm_mday + 1;
-            B_product[sales].date.month = date->tm_mon + 1;
-            B_product[sales].date.year = date->tm_year + 1900; 
+            B_product[sales].date.day = date->tm_mday;
+            B_product[sales].date.month = date->tm_mon;
+            B_product[sales].date.year = date->tm_year; 
             P_product[i].amount -= amount;
             sales++;
         }
@@ -741,13 +762,16 @@ void sale_product(char* code, int amount)
 void go_back()
 {
     int choice;
-    printf("retour au menu.\n");
-    printf("quitter le programme.\n");
+    printf("1 - retour au menu.\n");
+    printf("2 - quitter le programme.\n");
     printf("entrez votre choix: ");
-    scanf("%i", choice);
-    switch(choice)
+    scanf("%d", &choice);
+    if( choice == 1 )
     {
-        case 1: menu(); break;
-        case 2: exit_program(0); break;
+        menu();
     }
+    else if ( choice == 2 ){
+        exit_program(0);
+    }
+    
 }
