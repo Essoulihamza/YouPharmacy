@@ -1,3 +1,4 @@
+//YouCode PHARMACY MANAGEMENT PROJECT
 #include <stdio.h>
 #include <stdlib.h>
 #include <windows.h>
@@ -27,29 +28,36 @@ product* P_product = NULL;
 Buyed_product* B_product = NULL;
 //function prototype
 int menu();
-void print();
-void bubble_sort_alphabitcly();
-void selection_sort_by_price();
-void sort();
-void search_by_code();
-void search_by_amount();
-void search_products();
+//add
+void get_product_info();
 void add_one_product(int style);
 void add_products();
+//sort & print
+void sort();
+void bubble_sort_alphabitcly();
+void selection_sort_by_price();
+void print();
+//buy
 void buy_product();
+void sale_product(char* code, int amount);
+//search
+void search_products();
+void search_by_code();
+void search_by_amount();
+//stock
 void stock_status();
 void stock_supply();
 void delete_products();
-float min_sale_price();
-float max_sale_price();
-float totat_sale_price();
+//statistics
 void sales_statistics();
+void totat_sale_price();
+void average_sale_price();
+void max_sale_price();
+void min_sale_price();
+//usefull functions
 int is_avialable(char* code, int amount);
-void get_product_info();
 void exit_program();
-void sale_product(char* code, int amount);
 void go_back();
-float average_sale_price();
 //program start point
 int main(void)
 {
@@ -97,9 +105,9 @@ int menu()
             break;
         case 10:    exit_program(0);
             break;
-        case 11: 
-        printf("%lf"); break;
-        default: printf("no choice with this input\n");
+        default: 
+            printf("no choice with this input\n");
+            Sleep(2000);
             menu();
     }
 }
@@ -560,16 +568,22 @@ void delete_products()
     printf("\n\n\n");
     printf("Entrez le code du produit que vous souhaitez supprimer: ");
     scanf("%s", &code);
-    for(int i = 0; i < products_amount; i++ )
+    if( is_avialable(code, 0) == 0)
     {
-        if(strcasecmp(code, P_product[i].code) == 0 )
+        printf("\n\nce produit n'existe pas\n\n\n");
+    }
+    else{
+        for(int i = 0; i < products_amount; i++ )
         {
-            for(int j = i; j < products_amount - 1; j++ )
+            if(strcasecmp(code, P_product[i].code) == 0 )
             {
-                P_product[j] = P_product[j + 1];
+                for(int j = i; j < products_amount - 1; j++ )
+                {
+                    P_product[j] = P_product[j + 1];
+                }
+                products_amount--;
+                P_product = realloc(P_product, products_amount*sizeof(product));
             }
-            products_amount--;
-            P_product = realloc(P_product, products_amount*sizeof(product));
         }
     }
     printf("\n\n\n");
@@ -590,10 +604,6 @@ void sales_statistics()
 {
     system("cls");
     int choice;
-    float total = totat_sale_price();
-    float average = average_sale_price();
-    float max = max_sale_price();
-    float min = min_sale_price();
     printf("\n_______________________________________________________________Gestion de Pharmacie_____________________________________________________\n");
     printf("\n---------------------------------------------------------------Statistique de vente-----------------------------------------------------\n");
     printf("\n\n\n");
@@ -610,23 +620,19 @@ void sales_statistics()
     {
         case 1:
             system("cls");
-            printf("\n\n\n\nla valeur totale des ventes aujourd'hui est: %.2f\n\n\n", total);
-            go_back();
+            totat_sale_price();
             break;
         case 2: 
             system("cls");
-            printf("\n\n\nla valeur moyenne des ventes aujourd'hui est: %.2f\n\n\n", average);
-            go_back();
+            average_sale_price();
             break;
         case 3:
             system("cls");
-            printf("\n\nle Max des prix des produits vendus aujourd'hui est: %.2f\n\n\n", max);
-            go_back();
+            max_sale_price();
             break;
         case 4:
             system("cls");
-            printf("\n\nle Min des prix des produits vendus aujourd'hui est: %.2f\n\n\n", min);
-            go_back();
+            min_sale_price();
             break;
         case 5:
             menu();
@@ -636,66 +642,97 @@ void sales_statistics()
             break;
     }
 }
-float totat_sale_price()
+void totat_sale_price()
 {
-    time_t now = time(NULL);
-    struct tm* date = localtime(&now);
     float total = 0;
-    int day = date->tm_mday;
-    int month = date->tm_mon;
-    int year = date->tm_year;
-    for(int i = 0; i < sales; i++ )
+    if(sales == 0)
     {
-        if( B_product[i].date.year == year && B_product[i].date.month == month && B_product[i].date.day == day )
-            total = total + B_product[i].info.price * B_product[i].info.amount;
+        printf("\n\n\n\nla valeur totale des ventes aujourd'hui est: %.2f\n\n\n", total);
     }
-    return total;
+    else
+    {
+        time_t now = time(NULL);
+        struct tm* date = localtime(&now);
+        int day = date->tm_mday;
+        int month = date->tm_mon;
+        int year = date->tm_year;
+        for(int i = 0; i < sales; i++ )
+        {
+            if( B_product[i].date.year == year && B_product[i].date.month == month && B_product[i].date.day == day )
+                total = total + B_product[i].info.price * B_product[i].info.amount;
+        }
+        printf("\n\n\n\nla valeur totale des ventes aujourd'hui est: %.2f\n\n\n", total);
+    }
+    go_back();
 }
-float average_sale_price()
+void average_sale_price()
 {
-    time_t now = time(NULL);
-    struct tm* date = localtime(&now);
     float average = 0;
-    int day = date->tm_mday;
-    int month = date->tm_mon;
-    int year = date->tm_year;
-    for(int i = 0; i < sales; i++ )
+    if(sales == 0)
     {
-        if( B_product[i].date.year == year && B_product[i].date.month == month && B_product[i].date.day == day )
-            average += B_product[i].info.price;
+        printf("\n\n\nla valeur moyenne des ventes aujourd'hui est: %.2f DH\n\n\n", average);
+    }else
+    {
+        time_t now = time(NULL);
+        struct tm* date = localtime(&now);
+        int day = date->tm_mday;
+        int month = date->tm_mon;
+        int year = date->tm_year;
+        for(int i = 0; i < sales; i++ )
+        {
+            if( B_product[i].date.year == year && B_product[i].date.month == month && B_product[i].date.day == day )
+                average += B_product[i].info.price;
+        }
+        average = average / sales;
+        printf("\n\n\nla valeur moyenne des ventes aujourd'hui est: %.2f DH\n\n\n", average);
     }
-    average = average / sales;
-    return average;
+    go_back();
 }
-float max_sale_price()
+void max_sale_price()
 {
-    time_t now = time(NULL);
-    struct tm* date = localtime(&now);
     float max = 0;
-    int day = date->tm_mday;
-    int month = date->tm_mon;
-    int year = date->tm_year;
-    for(int i = 0; i < sales; i++ )
+    if(sales == 0)
     {
-        if( B_product[i].date.year == year && B_product[i].date.month == month &&  B_product[i].date.day == day && B_product[i].info.price > max )
-              max = B_product[i].info.price;
+        printf("\n\nle Max des prix des produits vendus aujourd'hui est: %.2f DH\n\n\n", max);
     }
-    return max;
+    else
+    {
+        time_t now = time(NULL);
+        struct tm* date = localtime(&now);
+        int day = date->tm_mday;
+        int month = date->tm_mon;
+        int year = date->tm_year;
+        for(int i = 0; i < sales; i++ )
+        {
+            if( B_product[i].date.year == year && B_product[i].date.month == month &&  B_product[i].date.day == day && B_product[i].info.price > max )
+                max = B_product[i].info.price;
+        }
+        printf("\n\nle Max des prix des produits vendus aujourd'hui est: %.2f DH\n\n\n", max);
+    }
+    go_back();
 }
-float min_sale_price()
+void min_sale_price()
 {
-    time_t now = time(NULL);
-    struct tm* date = localtime(&now);
-    float min = B_product[0].info.price;
-    int day = date->tm_mday;
-    int month = date->tm_mon;
-    int year = date->tm_year ;
-    for(int i = 0; i < sales; i++ )
+    float min = 0;
+    if(sales == 0 )
     {
-        if( B_product[i].date.year == year && B_product[i].date.month == month &&  B_product[i].date.day == day && B_product[i].info.price < min )
-                        min = B_product[i].info.price;
+        printf("\n\nle Min des prix des produits vendus aujourd'hui est: %.2f DH\n\n\n", min);
     }
-    return min;
+    else
+    {
+        time_t now = time(NULL);
+        struct tm* date = localtime(&now);
+        int day = date->tm_mday;
+        int month = date->tm_mon;
+        int year = date->tm_year ;
+        for(int i = 0; i < sales; i++ )
+        {
+            if( B_product[i].date.year == year && B_product[i].date.month == month &&  B_product[i].date.day == day && B_product[i].info.price <= min )
+                            min = B_product[i].info.price;
+        }
+        printf("\n\nle Min des prix des produits vendus aujourd'hui est: %.2f DH\n\n\n", min);
+    }
+    go_back();
 }
 int is_avialable(char* code, int amount)
 {
